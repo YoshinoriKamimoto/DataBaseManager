@@ -4,152 +4,169 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Data.OleDb;
+using System.Data;
 
-// Accessファイルを操作するクラス
-internal class AccessManager
+namespace WindowsFormsApp1
 {
-    private OleDbConnection connection;
-    private OleDbTransaction transaction;
-    private string connectionStr;
-
-
-    /// <summary>
-    /// コンストラクタ
-    /// </summary>
-    public AccessManager(string connectStr)
+    // Accessファイルを操作するクラス
+    internal class AccessManager
     {
-        // 接続文字列を代入
-        this.connectionStr = connectStr;
-    }
+        private OleDbConnection connection;
+        private OleDbTransaction transaction = null;
+        private string connectionStr;
 
 
-    /// <sumamry>
-    /// Access接続メソッド
-    /// </summary>
-    public void OpenAccess()
-    {
-        try
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
+        public AccessManager(string connectStr)
         {
-            // 接続用インスタンスを生成
-            this.connection = new OleDbConnection(this.connectionStr);
-
-            // 接続
-            this.connection.Open();
+            // 接続文字列を代入
+            this.connectionStr = connectStr;
         }
-        catch
+
+
+        /// <sumamry>
+        /// Access接続メソッド
+        /// </summary>
+        public void OpenAccess()
         {
-            throw;
-        }
-    }
-
-
-    /// <sumamry>
-    /// Access切断メソッド
-    /// </summary>
-    public void CloseAccess()
-    {
-        this.connection.Close();
-        this.connection.Dispose();
-    }
-
-
-    /// <summary>
-    /// トランザクション　開始メソッド
-    /// </summary>
-    public void BeginTran()
-    {
-        try
-        {
-            this.transaction = this.connection.BeginTransaction();
-        }
-        catch
-        {
-            throw;
-        }
-    }
-
-
-    /// <summary>
-    /// トランザクション　コミットメソッド
-    /// </summary>
-    public void CommitTran()
-    {
-        try
-        {
-            if (this.transaction.Connection != null)
+            try
             {
-                this.transaction.Commit();
-                this.transaction.Dispose();
+                // 接続用インスタンスを生成
+                this.connection = new OleDbConnection(this.connectionStr);
+
+                // 接続
+                this.connection.Open();
+            }
+            catch
+            {
+                throw;
             }
         }
-        catch
+
+
+        /// <sumamry>
+        /// Access切断メソッド
+        /// </summary>
+        public void CloseAccess()
         {
-            throw;
+            this.connection.Close();
+            this.connection.Dispose();
         }
-    }
 
 
-    /// <summary>
-    /// トランザクション　ロールバックメソッド
-    /// </summary>
-    public void RollBackTran()
-    {
-        try
+        /// <summary>
+        /// トランザクション　開始メソッド
+        /// </summary>
+        public void BeginTran()
         {
-            if (this.transaction.Connection != null)
+            try
             {
-                this.transaction.Rollback();
-                this.transaction.Dispose();
+                this.transaction = this.connection.BeginTransaction();
+            }
+            catch
+            {
+                throw;
             }
         }
-        catch
+
+
+        /// <summary>
+        /// トランザクション　コミットメソッド
+        /// </summary>
+        public void CommitTran()
         {
-            throw;
+            try
+            {
+                if (this.transaction != null)
+                {
+                    this.transaction.Commit();
+                    this.transaction.Dispose();
+                    this.transaction = null;
+                }
+            }
+            catch
+            {
+                throw;
+            }
         }
-    }
 
 
-    /// <summary>
-    /// SQL実行(結果取得なし)
-    /// </summary>
-    public void ExecuteNonQuery(string sqlStr)
-    {
-        try
+        /// <summary>
+        /// トランザクション　ロールバックメソッド
+        /// </summary>
+        public void RollBackTran()
         {
-            // SQL実行用インスタンスを生成
-            OleDbCommand command = new OleDbCommand(sqlStr, this.connection);
-
-            // SQL実行
-            command.ExecuteNonQuery();
+            try
+            {
+                if (this.transaction != null)
+                {
+                    this.transaction.Rollback();
+                    this.transaction.Dispose();
+                    this.transaction = null;
+                }
+            }
+            catch
+            {
+                throw;
+            }
         }
-        catch
+
+
+        /// <summary>
+        /// SQL実行(結果取得なし)
+        /// </summary>
+        public void ExecuteNonQuery(string sqlStr)
         {
-            throw;
+            try
+            {
+                
+                OleDbCommand command;
+                // トランザクション開始あり
+                if (this.transaction != null)
+                {
+                    // SQL実行用インスタンスを生成
+                    command = new OleDbCommand(sqlStr, this.connection, this.transaction);
+                }
+                else // トランザクション開始なし
+                {
+                    // SQL実行用インスタンスを生成
+                    command = new OleDbCommand(sqlStr, this.connection);
+                }
+
+                // SQL実行
+                command.ExecuteNonQuery();
+            }
+            catch
+            {
+                throw;
+            }
+
         }
-        
-    }
 
 
-    /// <summary>
-    /// SQL実行(結果取得あり:DataTable)
-    /// </summary>
-    public DataTable ExecuteQuery(string sqlStr)
-    {
-        try
+        /// <summary>
+        /// SQL実行(結果取得あり:DataTable)
+        /// </summary>
+        public DataTable ExecuteQuery(string sqlStr)
         {
-            // SQL実行用インスタンスを生成
-            OleDbDataAdapter adapter = new OleDbDataAdapter(sqlStr, this.connection);
+            try
+            {
+                // SQL実行用インスタンスを生成
+                OleDbDataAdapter adapter = new OleDbDataAdapter(sqlStr, this.connection);
 
-            // SQL実行
-            DataTable dt = new DataTable();
-            adapter.Fill(dt);
+                // SQL実行
+                DataTable dt = new DataTable();
+                adapter.Fill(dt);
 
-            // 返却
-            return dt;
-        }
-        catch
-        {
-            throw;
+                // 返却
+                return dt;
+            }
+            catch
+            {
+                throw;
+            }
         }
     }
 }

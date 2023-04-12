@@ -12,8 +12,8 @@ namespace WindowsFormsApp1
     internal class DBManager
     {
         private NpgsqlConnection connection;
-        private NpgsqlTransaction transaction;
-        private string connectionStr;   
+        private NpgsqlTransaction transaction = null;
+        private string connectionStr;
 
 
         /// <summary>
@@ -45,7 +45,7 @@ namespace WindowsFormsApp1
             {
                 throw;
             }
-            
+
         }
 
 
@@ -83,10 +83,11 @@ namespace WindowsFormsApp1
         {
             try
             {
-                if (this.transaction.Connection != null)
+                if (this.transaction != null)
                 {
                     this.transaction.Commit();
                     this.transaction.Dispose();
+                    this.transaction = null;
                 }
             }
             catch
@@ -103,10 +104,11 @@ namespace WindowsFormsApp1
         {
             try
             {
-                if (this.transaction.Connection != null)
+                if (this.transaction != null)
                 {
                     this.transaction.Rollback();
                     this.transaction.Dispose();
+                    this.transaction = null;
                 }
             }
             catch
@@ -123,17 +125,27 @@ namespace WindowsFormsApp1
         {
             try
             {
-                // SQL実行用インスタンスを生成
-                NpgsqlCommand command = new NpgsqlCommand(sqlStr, this.connection);
+                NpgsqlCommand command;
+                if (this.transaction != null)
+                {
+                    // SQL実行用インスタンスを生成
+                    command = new NpgsqlCommand(sqlStr, this.connection, this.transaction);
+                }
+                else
+                {
+                    // SQL実行用インスタンスを生成
+                    command = new NpgsqlCommand(sqlStr, this.connection);
+                }
+
 
                 // SQL実行
-                command.ExecuteNonQuery();
+                command.ExecuteNonQuery();                
             }
             catch
             {
                 throw;
             }
-            
+
         }
 
 
