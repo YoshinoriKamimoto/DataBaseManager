@@ -115,9 +115,9 @@ namespace WindowsFormsApp1
 
 
         /// <summary>
-        /// SQL実行(結果取得なし)
+        /// SQL実行(戻り値：レコード数のみ)
         /// </summary>
-        public void ExecuteNonQuery(string sqlStr)
+        public int ExecuteNonQuery(string sqlStr)
         {
             try
             {
@@ -136,7 +136,8 @@ namespace WindowsFormsApp1
                 }
 
                 // SQL実行
-                command.ExecuteNonQuery();
+                int cnt = command.ExecuteNonQuery();
+                return cnt;
             }
             catch
             {
@@ -147,7 +148,7 @@ namespace WindowsFormsApp1
 
 
         /// <summary>
-        /// SQL実行(結果取得あり:DataTable)
+        /// SQL実行(戻り値:DataTable)
         /// </summary>
         public DataTable ExecuteQuery(string sqlStr)
         {
